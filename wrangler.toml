@@ -1,0 +1,49 @@
+name = "maths-doubt-bot"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# KV namespace used for storing users, plans, settings, admin session.
+# Create it with:  npx wrangler kv namespace create BOT_DATA
+# Then paste the returned id below.
+[[kv_namespaces]]
+binding = "BOT_DATA"
+id = "5c84e6fcca79410b869162d9606057e8"
+
+# Durable Object used ONLY for atomic per-user rate limiting (accurate counting,
+# no race conditions even if many messages arrive at the same time).
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiterDO"
+
+# Durable Object used ONLY to coalesce multi-image "albums" a user sends together
+# (Telegram delivers each photo of an album as a separate webhook update).
+[[durable_objects.bindings]]
+name = "MEDIA_GROUP"
+class_name = "MediaGroupDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiterDO"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["MediaGroupDO"]
+
+# Runs automatically every 12 hours to check for plans expiring within the next 4 days
+# and send a reminder message to those users.
+[triggers]
+crons = ["0 */12 * * *"]
+
+# Secrets (set these with `npx wrangler secret put NAME`, do NOT put them here):
+#   BOT_TOKEN         -> your Telegram bot token from @BotFather
+#   GROQ_API_KEY      -> your Groq Cloud API key
+#   GROQ_MODEL        -> model used for DOUBT-SOLVING, e.g. "llama-3.3-70b-versatile"
+#   ADMIN_PASSWORD    -> password that opens the admin panel
+#   GEMINI_API_KEY    -> your Google Gemini API key (used ONLY for reading photos/PDFs)
+# Optional:
+#   GROQ_MODEL_QUIZ    -> separate model used ONLY for generating QUIZ questions
+#                         (falls back to GROQ_MODEL if not set)
+#   GEMINI_MODEL_VISION -> Gemini model used for photo/PDF solving
+#                         (defaults to "gemini-3.5-flash-lite" if not set)
+#   ADMIN_ID          -> Telegram numeric id allowed to see the admin panel
+#                        (defaults to 8054528325 if not set)
