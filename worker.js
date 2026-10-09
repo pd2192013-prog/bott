@@ -2555,11 +2555,11 @@ export default {
 
     if (url.pathname === "/webhook" && request.method === "POST") {
       const update = await request.json();
-      try {
-        await handleUpdate(env, update);
-      } catch (e) {
-        console.log("ERR", e && e.stack);
-      }
+      ctx.waitUntil(
+        handleUpdate(env, update).catch((e) => {
+          console.log("ERR", e && e.stack);
+        })
+      );
       return new Response("OK");
     }
 
